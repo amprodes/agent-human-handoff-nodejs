@@ -11,6 +11,6 @@
   "dependencies": {
     "dialogflow": "^0.5.0",
     "express": "^4.15.3",
-    "socket.io": "^2.0.1"
+    "socket.io": "^4.5.0"
   }
 }
