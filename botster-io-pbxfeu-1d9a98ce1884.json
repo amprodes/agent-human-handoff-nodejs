@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "botster-io-pbxfeu",
+  "private_key_id": "f2069b75812a123d37db19ee0810822818256322",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDWvUCVs+df67rH\nBG5QTaC7QEPHN8+MlEp6rMOY6J+/YBF8jfg+ZfZnWbHg5T7txa4gnZFy8xFPDBvU\nNi0xH3/4B5qxSOywfAJjxZbwGxrv8VmMPyyngTeWEaaufNYSJg0VmTg7mvUvPCi/\ncTL7rw4FvkHZII7RCpuNnJV8J5M9CG6Sk1n5X/0+utQbzBkVhLDGoeLI/nIIvXhV\n/mdbvXzDYfgEuKftiA00l9fhbJMq+Tp4GsrlAk7LVBrpJQwjaEGIpkCPBvr29fhX\nTJQU6SdTR3ncIIDvosOs2MZfbRMYyfyCIvq12mfSng6Eg/c7rhcHyaRrJbVgtcZO\njbGBdTv/AgMBAAECggEAEGbQybO9sWriOj88DxrOyF6b5AR+8CAyIXU+qgLik2Mg\nEsu5MUg9GMnAt1/AfbgX7lp6ozVY625jqxge6DNID/FsvwEbQE5Ifxxhb0zICERT\n8E1cTh2lhECBja7v9DTp0kOAswoek2ax6hAYXSGSyEeEOgmtlDPji7PGYH7uqmjt\nmBJzrbF3wse6MlHe2imO3Q/pfrNUonIlNKKJJP6z+d58J2dojOewrF91NG53el0C\nIlUb6p6WVczvvAhCCNhsQ5/H3KrIe8komXPFZSnY7cL9oXA9AqtIH/SdO9lci5DZ\n/K2PpMh0JNUUKf3j9QcF1zdMm5gB5p8B7B1yYncDOQKBgQD3bWOEzi6ip6xDb0L5\nIDUcegfhlNG6i6rAOIB7r9cASsy+z4C6XaHnjjUl/bney+HIKJYTKZlkclns3X9H\nTykzoY7TduBfXOMfcA8g6rxqg4V5C4tPFl6kjp/LOAv1OtzXRjv2eb/sisYqGPwP\n+ryUe8RKiXO0P8OjCXaAyO95IwKBgQDeLe4GkIPFiE2SxLSR2ZIl2hJqbDw60NIp\nY5Y1EThziwWHu9AG2CaBXIebYCS4y5/Mw3HrNj6JvMrqD/GgSpUnpEw2xpA1W1uR\nkCBOhCwefuxlnF+b56xXr6H7qJoV9ez/cnFj9H/mZDuaNZcct+abPIFCnhI2HSHG\nPHrXMVEVdQKBgQD2D4Qz87PvMF6hJYnuJPiMnFMwJIa6ROGHjelAmCtx7/FUJRn4\nvNshY4w5fu2Uwx+DpdExt2IDwbDqXZCRQwlPfnCCnisey0pX3mI9MxQzvR5EtZVS\nDoYKkogZWmCR/XrYX9GMGaIjRBM0lGpAHfPimn8oPS+i5vLRNbzy8GEvDwKBgQCq\nd1z4Jmsj5Md4A3pzqRYr+pxEkRTJH60P2nvF7Zd9dz3f/abHiZJJkJ/vA55JNto9\ntfsyt6TV80dQvLjr/i1gg/uBz2mXtqeUEJvpAhoDr+hasdbdfKxLftLujlbi4JRd\nDgaX5WE4eNEOKW3ut960XoDihvt8D2/5dC/f6dPHfQKBgQDkbPeDKmR5VLd2gCPp\nPMQL0BvC4ryFgj474ItsFJ04x5KgU/nBOd/G/9d5XP6RO0FM6TkkxkD6H7KpPvMP\n+NF8WDx2iA1rITymu/bNOw8OMqVVuOTlXvruyKGdvdSaRXeq8WHT6O7tN2pOf6xl\nAo8wLTG5pLqDAZ8kWG3JdESzGA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "botster-io@botster-io-pbxfeu.iam.gserviceaccount.com",
+  "client_id": "103786219122933967445",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/botster-io%40botster-io-pbxfeu.iam.gserviceaccount.com"
+}
