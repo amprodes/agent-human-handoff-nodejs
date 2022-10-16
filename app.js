@@ -12,14 +12,19 @@
 // limitations under the License.
 
 // Load third party dependencies
-const app = require('express')();
+const express = require('express');
+let app = express()
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+require('dotenv').config()
 
 // Load our custom classes
 const CustomerStore = require('./customerStore.js');
 const MessageRouter = require('./messageRouter.js');
+const webhook = require('./webhooks.js');
 
+const bodyParser = require("body-parser");
+const helmet = require("helmet");
 // Grab the service account credentials path from an environment variable
 const keyPath = process.env.DF_SERVICE_ACCOUNT_PATH;
 if(!keyPath) {
@@ -28,13 +33,17 @@ if(!keyPath) {
 }
 
 // Load and instantiate the Dialogflow client library
-const { SessionsClient } = require('dialogflow');
+const { SessionsClient } = require('@google-cloud/dialogflow-cx');
 const dialogflowClient = new SessionsClient({
-  keyFilename: keyPath
+  keyFilename: keyPath,
+  apiEndpoint: process.env.DF_API_ENDPOINT
 })
 
 // Grab the Dialogflow project ID from an environment variable
 const projectId = process.env.DF_PROJECT_ID;
+const location = process.env.DF_PROJECT_REGION;
+const agentId = process.env.DF_AGENT_ID;
+
 if(!projectId) {
   console.log('You need to specify a project ID in the environment variable DF_PROJECT_ID. See README.md for details.');
   process.exit(1);
@@ -46,9 +55,15 @@ const messageRouter = new MessageRouter({
   customerStore: customerStore,
   dialogflowClient: dialogflowClient,
   projectId: projectId,
+  location,
+  agentId,
   customerRoom: io.of('/customer'),
   operatorRoom: io.of('/operator')
 });
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended:false}));
+app.use(helmet());
 
 // Serve static html files for the customer and operator clients
 app.get('/customer', (req, res) => {
@@ -59,8 +74,14 @@ app.get('/operator', (req, res) => {
   res.sendFile(`${__dirname}/static/operator.html`);
 });
 
+// Webhooks
+app.post('/isThereResume', webhook.isThereResume)
+app.post('/deleteExistingResume', webhook.deleteExistingResume)
+app.post('/checkOpportunities', webhook.checkOpportunities)
+app.post('/isfilePresent', webhook.isfilePresent)
+
 // Begin responding to websocket and http requests
 messageRouter.handleConnections();
-http.listen(3000, () => {
-  console.log('Listening on *:3000');
+http.listen(5000, () => {
+  console.log('Listening on *:5000');
 });

@@ -15,6 +15,7 @@ module.exports = {
   EVENT_CUSTOMER_CONNECTED: 'customer connected',
   EVENT_CUSTOMER_DISCONNECTED: 'customer disconnected',
   EVENT_CUSTOMER_MESSAGE: 'customer message',
+  EVENT_TO_CUSTOMER_MESSAGE: 'message to customer',
   EVENT_OPERATOR_MESSAGE: 'operator message',
   EVENT_OPERATOR_REQUESTED: 'operator requested',
   EVENT_SYSTEM_ERROR: 'system error',

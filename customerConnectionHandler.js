@@ -24,20 +24,20 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
   }
 
   init (customerId) {
-    console.log('A customer joined: ', this.socket.id);
-    this.router._sendConnectionStatusToOperator(customerId)
+    console.log('A customer joined: ', customerId);
+    //this.router._sendConnectionStatusToOperator(customerId)
     // Determine if this is a new or known customer
-      .then(() => this.router.customerStore.getOrCreateCustomer(customerId))
+      this.router.customerStore.getOrCreateCustomer(customerId)
       .then(customer => {
         console.log('A customer connected: ', customer);
         // If new, begin the Dialogflow conversation
-        if (customer.isNew) {
-          return this.router._sendEventToAgent(customer)
-            .then(responses => {
-              const response = responses[0];
-              this._respondToCustomer(response.queryResult.fulfillmentText, this.socket);
-            });
-        }
+        // if (customer.isNew) {
+        //   return this.router._sendEventToAgent(customer)
+        //     .then(responses => {
+        //       const response = responses[0];
+        //       this._respondToCustomer(response.queryResult.fulfillmentText, this.socket);
+        //     });
+        // }
         // If known, do nothing - they just reconnected after a network interruption
       })
       .catch(error => {
@@ -55,7 +55,7 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
     });
     this.socket.on(AppConstants.EVENT_DISCONNECT, () => {
       console.log('Customer disconnected');
-      this.router._sendConnectionStatusToOperator(this.socket.id, true);
+      //this.router._sendConnectionStatusToOperator(this.socket.id, true);
       this.onDisconnect();
     });
   }
@@ -67,12 +67,12 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
       .getOrCreateCustomer(this.socket.id)
       .then(customer => {
         // Tell the router to perform any next steps
-        return this.router._routeCustomer(utterance, customer, this.socket.id);
+        return this.router._routeCustomer(utterance);
       })
       .then(response => {
         // Send any response back to the customer
         if (response) {
-          return this._respondToCustomer(response, this.socket);
+          return this._respondToCustomer(response[0], this.socket);
         }
       })
       .catch(error => {
@@ -85,14 +85,16 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
 
   // Send a message or an array of messages to the customer
   _respondToCustomer (response) {
-    console.log('Sending response to customer:', response);
-    if (Array.isArray(response)) {
-      response.forEach(message => {
-        this.socket.emit(AppConstants.EVENT_CUSTOMER_MESSAGE, message);
+    //console.log('User Context:', response);
+    const message = Array.from(response.queryResult.responseMessages).map(result => result)
+    if (Array.isArray(message)) {
+      message.forEach(message => {
+        console.log('Sending response to customer:', message.text.text);
+        this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, message.text.text);
       });
       return;
     }
-    this.socket.emit(AppConstants.EVENT_CUSTOMER_MESSAGE, response);
+    this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, response);
     // We're using Socket.io for our chat, which provides a synchronous API. However, in case
     // you want to swich it out for an async call, this method returns a promise.
     return Promise.resolve();
