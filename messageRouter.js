@@ -85,8 +85,8 @@ class MessageRouter {
     //   }, this.timeout)
     //   this.isTimeOutFired = true
     // }
-    if(utterance.event){
-      return this._sendEventToAgent(utterance.userId, utterance.event);
+    if (utterance.event) {
+      return this._sendEventToAgent(utterance.userId, utterance.event, utterance.queryParams);
     }
     return this._sendUtteranceToAgent(utterance);
 
@@ -121,9 +121,8 @@ class MessageRouter {
   }
 
   // Uses the Dialogflow client to send a 'WELCOME' event to the agent, starting the conversation.
-  async _sendEventToAgent(userId, event) {
+  async _sendEventToAgent(userId, event, queryParams) {
     console.log(`Sending event ${event} to agent`);
-    this.isTimeOutFired = false;
     const sessionPath = this.client.projectLocationAgentSessionPath(
       this.projectId,
       this.location,
@@ -136,11 +135,16 @@ class MessageRouter {
         event: {
           event
         },
-        languageCode: 'en'
-      }
+        languageCode: 'en' 
+      },
+      queryParams
     }
-    const [response] = await this.client.detectIntent(request);
-    return [response];
+    try {
+      const [response] = await this.client.detectIntent(request);
+      return [response];
+    } catch (e) {
+      console.log(`${e.message}`)
+    }
   }
 
   // Sends an utterance to Dialogflow and returns a promise with API response.

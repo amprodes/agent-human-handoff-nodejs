@@ -29,7 +29,7 @@ exports.isThereResume = async (request, response) => {
             owner: userId
         },
     }).then(async (res) => {
-        if (res.data.status === 'SUCCESS') {
+        if (res.data.status === 'SUCCESS' && res.data.data.data[0].filename !== null) {
             //console.log(res.data.data.data)
             return {
                 session: request.body.sessionInfo.session,
@@ -42,7 +42,8 @@ exports.isThereResume = async (request, response) => {
                 //         }
                 //     ]
                 // },
-                sessionInfo: {
+                sessionInfo:
+                {
                     parameters: {
                         thereIsResume: "true",
                         filename: `${res.data.data.data[0].filename}`
@@ -64,7 +65,8 @@ exports.isThereResume = async (request, response) => {
                 sessionInfo: {
                     parameters: {
                         thereIsResume: "false",
-                        filename: ""
+                        resume: "",
+                        filename: "false"
                     }
                 }
             }
@@ -94,7 +96,7 @@ exports.deleteExistingResume = async (request, response) => {
                     sessionInfo: {
                         parameters: {
                             thereIsDeletedResume: "true",
-                            filename: ""
+                            filename: "false"
                         }
                     }
                 }
@@ -131,7 +133,7 @@ exports.checkOpportunities = async (request, response) => {
                 } else {
                     // We didn't found a opportunity, let's search for an opportunity
                     hasOpportunity = false
-                    await opportunityJobs.add({ userId, resume: request.body.sessionInfo.parameters.filename }, { removeOnFail: true });
+                    await opportunityJobs.add({ userId, resume: request.body.sessionInfo.parameters.filename });
                 }
 
                 return response.json({
@@ -148,33 +150,37 @@ exports.checkOpportunities = async (request, response) => {
     }
 }
 exports.isfilePresent = async (request, response) => {
-    //cleans all jobs that completed over 5 seconds ago.
+    let parserSession = request.body.sessionInfo.session.split('/'),
+        userId = parserSession[parserSession.length - 1]
+    // cleans all jobs that completed over 5 seconds ago.
     await resumeJobs.clean(5000);
-    //clean all jobs that failed over 10 seconds ago.
+    // clean all jobs that failed over 10 seconds ago.
     await resumeJobs.clean(5000, 'failed');
-    const isfilePresent = await resumeJobs.add({ task:'isFilePresent', resume: request.body.sessionInfo.parameters.filename }, { removeOnFail: true });
-    console.log({isfilePresent})
-    resumeJobs.on('completed', function (job, result) {
-        // Job completed with output result!
-        console.log(job, result)
-      })
-    if(isfilePresent){
-        return response.json({
-            session: request.body.sessionInfo.session,
-            sessionInfo: {
-                parameters: {
-                    isfilePresent: 'true'
-                }
-            }
-        });
-    } else {
-        return response.json({
-            session: request.body.sessionInfo.session,
-            sessionInfo: {
-                parameters: {
-                    isfilePresent: 'false'
-                }
-            }
-        });
-    }
+ 
+    await resumeJobs.add({ task: 'isFilePresent', resume: request.body.sessionInfo.parameters.filename, userId });
+    return response.json({
+        session: request.body.sessionInfo.session
+    })
+
+}
+exports.finishTheForm = async (request, response) => {
+    let parserSession = request.body.sessionInfo.session.split('/'),
+        userId = parserSession[parserSession.length - 1]
+    // cleans all jobs that completed over 5 seconds ago.
+    await resumeJobs.clean(5000);
+    // clean all jobs that failed over 10 seconds ago.
+    await resumeJobs.clean(5000, 'failed');
+    console.log('request', request.body)
+    await opportunityJobs.add(
+        'finishTheForm', 
+        { 
+            years_of_experience: request.body.sessionInfo.parameters.years_of_experience, 
+            level_of_english: request.body.sessionInfo.parameters.level_of_english,
+            filename: request.body.sessionInfo.parameters.filename,
+            salary_expectation: request.body.sessionInfo.parameters.salary_expectation,
+            ready_for_remote: request.body.sessionInfo.parameters.ready_for_remote,
+            userId });
+    return response.json({
+        session: request.body.sessionInfo.session
+    })
 }

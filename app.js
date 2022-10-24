@@ -16,6 +16,10 @@ const express = require('express');
 let app = express()
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+const Queue = require('bull');
+const { createBullBoard } = require('@bull-board/api');
+const { BullAdapter } = require('@bull-board/api/bullAdapter');
+const { BullMQAdapter } = require('@bull-board/api/bullMQAdapter');
 require('dotenv').config()
 
 // Load our custom classes
@@ -25,6 +29,32 @@ const webhook = require('./webhooks.js');
 
 const bodyParser = require("body-parser");
 const helmet = require("helmet");
+
+const { ExpressAdapter } = require('@bull-board/express');
+
+const cola = new Queue('cola', {
+  redis: { port: 6379, host: '172.17.0.13'/*, password: 'foobared'*/ },
+}); // if you have a special connection to redis. 
+
+const resumeJobs = new Queue('resumeJobs', {
+  redis: { port: 6379, host: '172.17.0.13'/*, password: 'foobared'*/ },
+});
+
+const opportunityJobs = new Queue('opportunityJobs', {
+  redis: { port: 6379, host: '172.17.0.13'/*, password: 'foobared'*/ },
+});
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath('/admin/queues');
+
+const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
+  queues: [new BullAdapter(cola), new BullAdapter(opportunityJobs), new BullMQAdapter(resumeJobs)],
+  serverAdapter: serverAdapter,
+});
+ 
+
+app.use('/admin/queues', serverAdapter.getRouter());
+
+
 // Grab the service account credentials path from an environment variable
 const keyPath = process.env.DF_SERVICE_ACCOUNT_PATH;
 if(!keyPath) {
@@ -79,7 +109,7 @@ app.post('/isThereResume', webhook.isThereResume)
 app.post('/deleteExistingResume', webhook.deleteExistingResume)
 app.post('/checkOpportunities', webhook.checkOpportunities)
 app.post('/isfilePresent', webhook.isfilePresent)
-
+app.post('/finishTheForm', webhook.finishTheForm)
 // Begin responding to websocket and http requests
 messageRouter.handleConnections();
 http.listen(5000, () => {

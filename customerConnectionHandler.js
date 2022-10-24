@@ -16,18 +16,18 @@ const ChatConnectionHandler = require('./chatConnectionHandler.js');
 
 // Handles the connection to an individual customer
 class CustomerConnectionHandler extends ChatConnectionHandler {
-  constructor (socket, messageRouter, onDisconnect) {
+  constructor(socket, messageRouter, onDisconnect) {
     super(socket, messageRouter, onDisconnect);
     // In this sample, we use the socket's unique id as a customer id.
     this.init(socket.id);
     this.attachHandlers();
   }
 
-  init (customerId) {
+  init(customerId) {
     console.log('A customer joined: ', customerId);
     //this.router._sendConnectionStatusToOperator(customerId)
     // Determine if this is a new or known customer
-      this.router.customerStore.getOrCreateCustomer(customerId)
+    this.router.customerStore.getOrCreateCustomer(customerId)
       .then(customer => {
         console.log('A customer connected: ', customer);
         // If new, begin the Dialogflow conversation
@@ -48,7 +48,7 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
       });
   }
 
-  attachHandlers () {
+  attachHandlers() {
     this.socket.on(AppConstants.EVENT_CUSTOMER_MESSAGE, (message) => {
       console.log('Received customer message: ', message);
       this._gotCustomerInput(message);
@@ -61,7 +61,7 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
   }
 
   // Called on receipt of input from the customer
-  _gotCustomerInput (utterance) {
+  _gotCustomerInput(utterance) {
     // Look up this customer
     this.router.customerStore
       .getOrCreateCustomer(this.socket.id)
@@ -72,7 +72,7 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
       .then(response => {
         // Send any response back to the customer
         if (response) {
-          return this._respondToCustomer(response[0], this.socket);
+          return this._respondToCustomer(response);
         }
       })
       .catch(error => {
@@ -84,23 +84,49 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
   }
 
   // Send a message or an array of messages to the customer
+  // _respondToCustomer(response) {
+  //   console.log('User Context:', response.queryResult.responseMessages.text.text);
+  //   if (Array.isArray(response.queryResult.responseMessages) && response.queryResult.responseMessages.length > 0) {
+  //     const message = Array.from(response.queryResult.responseMessages).map(result => result)
+  //     if (Array.isArray(message)) {
+  //       message.forEach(messages => {
+  //         if (messages?.text?.text && Array.isArray(messages?.text?.text)) {
+  //           messages?.text?.text?.forEach(message => {
+  //             this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, message);
+  //           })
+  //         }
+  //       });
+  //       return;
+  //     }
+  //   } 
+  //   //this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, response);
+  //   // We're using Socket.io for our chat, which provides a synchronous API. However, in case
+  //   // you want to swich it out for an async call, this method returns a promise.
+  //   return Promise.resolve();
+  // }
+
   _respondToCustomer (response) {
-    //console.log('User Context:', response);
-    const message = Array.from(response.queryResult.responseMessages).map(result => result)
-    if (Array.isArray(message)) {
-      message.forEach(message => {
-        console.log('Sending response to customer:', message.text.text);
-        this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, message.text.text);
+    //console.log('Sending response to customer:', response);
+    console.log('Current Page:', response[0].queryResult.currentPage);
+    console.log('Current parameters:', response[0].queryResult.parameters);
+    console.log('Current message:', response[0].queryResult.responseMessages);
+    //console.log('Current intent:', response[0].queryResult.intent);
+    if (Array.isArray(response)) {
+      response.forEach(message => {
+        if (Array.isArray(message.queryResult.responseMessages) && message.queryResult.responseMessages.length > 0) {
+          const newArray = message.queryResult.responseMessages; 
+          this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, newArray);
+        }
+        //this.socket.emit(AppConstants.EVENT_CUSTOMER_MESSAGE, message);
       });
       return;
     }
-    this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, response);
+    //this.socket.emit(AppConstants.EVENT_CUSTOMER_MESSAGE, response);
     // We're using Socket.io for our chat, which provides a synchronous API. However, in case
     // you want to swich it out for an async call, this method returns a promise.
     return Promise.resolve();
   }
-
-  _sendErrorToCustomer () {
+  _sendErrorToCustomer() {
     // Immediately notifies customer of error
     console.log('Sending error to customer');
     this.socket.emit(AppConstants.EVENT_SYSTEM_ERROR, {
