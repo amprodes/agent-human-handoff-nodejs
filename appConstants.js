@@ -20,7 +20,7 @@ module.exports = {
   EVENT_OPERATOR_REQUESTED: 'operator requested',
   EVENT_SYSTEM_ERROR: 'system error',
   EVENT_DISCONNECT: 'disconnect',
-
+  FULL_RESPONSE: 'full response',
   CONTEXT_OPERATOR_REQUEST: 'operator_request',
 
   OPERATOR_GREETING: `Hello, I'm a human. How can I help you?`

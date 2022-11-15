@@ -33,21 +33,31 @@ const helmet = require("helmet");
 const { ExpressAdapter } = require('@bull-board/express');
 
 const cola = new Queue('cola', {
-  redis: { port: 6379, host: '172.17.0.13'/*, password: 'foobared'*/ },
+  redis: { port: 6379, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
 }); // if you have a special connection to redis. 
 
 const resumeJobs = new Queue('resumeJobs', {
-  redis: { port: 6379, host: '172.17.0.13'/*, password: 'foobared'*/ },
+  redis: { port: 6379, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
 });
 
 const opportunityJobs = new Queue('opportunityJobs', {
-  redis: { port: 6379, host: '172.17.0.13'/*, password: 'foobared'*/ },
+  redis: { port: 6379, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
 });
+
+const principalQueue = new Queue('principalQueue', {
+  redis: { port: 6379, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+});
+
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
-  queues: [new BullAdapter(cola), new BullAdapter(opportunityJobs), new BullMQAdapter(resumeJobs)],
+  queues: [
+    new BullAdapter(cola), 
+    new BullAdapter(opportunityJobs), 
+    new BullMQAdapter(resumeJobs),
+    new BullMQAdapter(principalQueue)
+  ],
   serverAdapter: serverAdapter,
 });
  
@@ -109,7 +119,8 @@ app.post('/isThereResume', webhook.isThereResume)
 app.post('/deleteExistingResume', webhook.deleteExistingResume)
 app.post('/checkOpportunities', webhook.checkOpportunities)
 app.post('/isfilePresent', webhook.isfilePresent)
-app.post('/finishTheForm', webhook.finishTheForm)
+app.post('/fillingTheFormPage1', webhook.fillingTheFormPage1)
+app.post('/fillingTheFormPage2', webhook.fillingTheFormPage2)
 // Begin responding to websocket and http requests
 messageRouter.handleConnections();
 http.listen(5000, () => {

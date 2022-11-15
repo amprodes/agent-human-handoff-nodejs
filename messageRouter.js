@@ -167,7 +167,7 @@ class MessageRouter {
       queryParams: utterance.queryParams
     }
     const [response] = await this.client.detectIntent(request);
-    return [response];
+    return [response, { userId: utterance.userId }];
   }
 
   // Send an utterance, or an array of utterances, to the operator channel so that

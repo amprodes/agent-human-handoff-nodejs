@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+const appConstants = require('./appConstants.js');
 const AppConstants = require('./appConstants.js');
 const ChatConnectionHandler = require('./chatConnectionHandler.js');
 
@@ -21,6 +22,8 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
     // In this sample, we use the socket's unique id as a customer id.
     this.init(socket.id);
     this.attachHandlers();
+    this.count = 0;
+    this.usr = 'undefined'
   }
 
   init(customerId) {
@@ -62,6 +65,11 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
 
   // Called on receipt of input from the customer
   _gotCustomerInput(utterance) {
+    if(this.usr != utterance.userId){
+      this.count = 0;
+      this.usr = utterance.userId;
+    }
+
     // Look up this customer
     this.router.customerStore
       .getOrCreateCustomer(this.socket.id)
@@ -106,16 +114,22 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
   // }
 
   _respondToCustomer (response) {
-    //console.log('Sending response to customer:', response);
-    console.log('Current Page:', response[0].queryResult.currentPage);
-    console.log('Current parameters:', response[0].queryResult.parameters);
-    console.log('Current message:', response[0].queryResult.responseMessages);
+    console.log('Sending response to customer:', response);
+    // console.log('Current Page:', response[0].queryResult.currentPage);
+    // console.log('Current parameters:', response[0].queryResult.parameters);
+    // console.log('Current message:', response[0].queryResult.responseMessages);
+    console.log('ALL:', response[0]);
+    this.count++;
+    if(response[0].queryResult.currentPage.name === 'Start Page'){
+      this.count = 0;
+    }
     //console.log('Current intent:', response[0].queryResult.intent);
     if (Array.isArray(response)) {
-      response.forEach(message => {
-        if (Array.isArray(message.queryResult.responseMessages) && message.queryResult.responseMessages.length > 0) {
+      response?.forEach(message => {
+        if (Array.isArray(message.queryResult?.responseMessages) && message.queryResult?.responseMessages.length > 0) {
           const newArray = message.queryResult.responseMessages; 
-          this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, newArray);
+          this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, { newArray, userId: response[1]?.userId || this.usr, response, count: this.count });
+          //this.socket.emit(appConstants.FULL_RESPONSE, { response, count: this.count });
         }
         //this.socket.emit(AppConstants.EVENT_CUSTOMER_MESSAGE, message);
       });
