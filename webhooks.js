@@ -151,21 +151,21 @@ exports.checkOpportunities = async (request, response) => {
                         query: {
                             id: userId
                         },
-                    }) 
+                    })
 
                     let userResume;
-                    if(resume.data.status === 'SUCCESS' && resume.data.data.data.length){
+                    if (resume.data.status === 'SUCCESS' && resume.data.data.data.length) {
                         userResume = resume.data.data.data[0].filename;
                     }
                     // We didn't found a opportunity, let's search for an opportunity
                     hasOpportunity = false
-                    await opportunityJobs.add(
+                    await opportunityJobs.add('fillingOpportunities',
                         {
                             userId,
                             resume: request.body.sessionInfo.parameters?.resume || request.body.sessionInfo.parameters?.filename || userResume
                         }, {
                         attempts: 5,
-                        timeout: 5000
+                        timeout: 60000
                     });
                 }
 
@@ -226,6 +226,9 @@ exports.fillingTheFormPage1 = async (request, response) => {
             skype: request.body.sessionInfo.parameters.skype,
             resume: request.body.sessionInfo.parameters.resume || request.body.sessionInfo.parameters.filename,
             userId
+        }, 
+        { 
+            timeout: 60000
         });
     return response.json({
         session: request.body.sessionInfo.session
@@ -252,6 +255,9 @@ exports.fillingTheFormPage2 = async (request, response) => {
             country: request.body.sessionInfo.parameters.country,
             specialization: request.body.sessionInfo.parameters.specialization,
             userId
+        }, 
+        { 
+            timeout: 60000
         });
     return response.json({
         session: request.body.sessionInfo.session

@@ -46,8 +46,8 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
       .catch(error => {
         // Log this unspecified error to the console and
         // inform the customer there has been a problem
-        console.log('Error after customer connection: ', error);
-        this._sendErrorToCustomer(error);
+        console.log('Error after customer connection: ', error.message);
+        this._sendErrorToCustomer(error.message);
       });
   }
 
@@ -86,8 +86,8 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
       .catch(error => {
         // Log this unspecified error to the console and
         // inform the customer there has been a problem
-        console.log('Error after customer input: ', error);
-        this._sendErrorToCustomer(error);
+        console.log('Error after customer input: ', error.message);
+        this._sendErrorToCustomer(error.message);
       });
   }
 
@@ -140,12 +140,12 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
     // you want to swich it out for an async call, this method returns a promise.
     return Promise.resolve();
   }
-  _sendErrorToCustomer() {
+  _sendErrorToCustomer(message) {
     // Immediately notifies customer of error
-    console.log('Sending error to customer');
+    console.log(`Sending error to customer ${message}`);
     this.socket.emit(AppConstants.EVENT_SYSTEM_ERROR, {
       type: 'Error',
-      message: 'There was a problem.'
+      message: `There was a problem. ${message}`
     });
   }
 }

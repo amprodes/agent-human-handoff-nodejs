@@ -32,31 +32,38 @@ const helmet = require("helmet");
 
 const { ExpressAdapter } = require('@bull-board/express');
 
+const messagesQueue = new Queue('messagesQueue', {
+  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+});
+
 const cola = new Queue('cola', {
-  redis: { port: 6379, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
 }); // if you have a special connection to redis. 
 
 const resumeJobs = new Queue('resumeJobs', {
-  redis: { port: 6379, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
 });
 
 const opportunityJobs = new Queue('opportunityJobs', {
-  redis: { port: 6379, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+}); 
+
+const dbQueue = new Queue('dbQueue', {
+  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
 });
 
-const principalQueue = new Queue('principalQueue', {
-  redis: { port: 6379, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-});
+
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
   queues: [
+    new BullMQAdapter(messagesQueue),
     new BullAdapter(cola), 
     new BullAdapter(opportunityJobs), 
     new BullMQAdapter(resumeJobs),
-    new BullMQAdapter(principalQueue)
+    new BullMQAdapter(dbQueue)
   ],
   serverAdapter: serverAdapter,
 });
