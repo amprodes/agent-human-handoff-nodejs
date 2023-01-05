@@ -34,6 +34,7 @@ const { ExpressAdapter } = require('@bull-board/express');
 
 const messagesQueue = new Queue('messagesQueue', {
   redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+  settings: { maxStalledCount: 5, lockDuration: 300000 }
 });
 
 const cola = new Queue('cola', {
@@ -46,35 +47,45 @@ const resumeJobs = new Queue('resumeJobs', {
 
 const opportunityJobs = new Queue('opportunityJobs', {
   redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-}); 
+});
 
 const dbQueue = new Queue('dbQueue', {
   redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
 });
 
+const userQueue = new Queue('userQueue', {
+  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+});
 
-
+(async () => {
+  await messagesQueue.clean(60, 'wait');
+  await messagesQueue.clean(60, 'active');
+  await messagesQueue.clean(60, 'failed');
+  await messagesQueue.clean(60, 'delayed');
+  await messagesQueue.clean(60, 'completed');
+})()
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
   queues: [
     new BullMQAdapter(messagesQueue),
-    new BullAdapter(cola), 
-    new BullAdapter(opportunityJobs), 
+    new BullAdapter(cola),
+    new BullAdapter(opportunityJobs),
     new BullMQAdapter(resumeJobs),
-    new BullMQAdapter(dbQueue)
+    new BullMQAdapter(dbQueue),
+    new BullMQAdapter(userQueue)
   ],
   serverAdapter: serverAdapter,
 });
- 
+
 
 app.use('/admin/queues', serverAdapter.getRouter());
 
 
 // Grab the service account credentials path from an environment variable
 const keyPath = process.env.DF_SERVICE_ACCOUNT_PATH;
-if(!keyPath) {
+if (!keyPath) {
   console.log('You need to specify a path to a service account keypair in environment variable DF_SERVICE_ACCOUNT_PATH. See README.md for details.');
   process.exit(1);
 }
@@ -91,7 +102,7 @@ const projectId = process.env.DF_PROJECT_ID;
 const location = process.env.DF_PROJECT_REGION;
 const agentId = process.env.DF_AGENT_ID;
 
-if(!projectId) {
+if (!projectId) {
   console.log('You need to specify a project ID in the environment variable DF_PROJECT_ID. See README.md for details.');
   process.exit(1);
 }
@@ -109,7 +120,7 @@ const messageRouter = new MessageRouter({
 });
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended:false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(helmet());
 
 // Serve static html files for the customer and operator clients
@@ -126,8 +137,8 @@ app.post('/isThereResume', webhook.isThereResume)
 app.post('/deleteExistingResume', webhook.deleteExistingResume)
 app.post('/checkOpportunities', webhook.checkOpportunities)
 app.post('/isfilePresent', webhook.isfilePresent)
-app.post('/fillingTheFormPage1', webhook.fillingTheFormPage1)
-app.post('/fillingTheFormPage2', webhook.fillingTheFormPage2)
+app.post('/addingReferral', webhook.addingReferral)
+app.post('/updateJobInfo', webhook.updateJobInfo)
 // Begin responding to websocket and http requests
 messageRouter.handleConnections();
 http.listen(5000, () => {

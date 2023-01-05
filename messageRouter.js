@@ -135,7 +135,7 @@ class MessageRouter {
         event: {
           event
         },
-        languageCode: 'en' 
+        languageCode: 'en'
       },
       queryParams
     }
@@ -150,24 +150,39 @@ class MessageRouter {
   // Sends an utterance to Dialogflow and returns a promise with API response.
   async _sendUtteranceToAgent(utterance) {
     console.log('Sending utterance to agent', utterance);
-    const sessionPath = this.client.projectLocationAgentSessionPath(
-      this.projectId,
-      this.location,
-      this.agentId,
-      utterance.userId
-    )
-    const request = {
-      session: sessionPath,
-      queryInput: {
-        text: {
-          text: utterance.message
-        },
-        languageCode: 'en'
-      },
-      queryParams: utterance.queryParams
+    try {
+      const sessionPath = this.client.projectLocationAgentSessionPath(
+        this.projectId,
+        this.location,
+        this.agentId,
+        utterance.userId
+      )
+      let request;
+      
+      if (utterance.message) {
+        request = {
+          session: sessionPath,
+          queryInput: {
+            text: {
+              text: utterance.message
+            },
+            languageCode: 'en'
+          },
+          queryParams: utterance.queryParams
+        }
+      }
+
+      if (!utterance.message) {
+        request = {
+          session: sessionPath,
+          queryParams: utterance.queryParams,
+        }
+      }
+      const [response] = await this.client.detectIntent(request);
+      return [response, { userId: utterance.userId }];
+    } catch (e) {
+      console.log(e)
     }
-    const [response] = await this.client.detectIntent(request);
-    return [response, { userId: utterance.userId }];
   }
 
   // Send an utterance, or an array of utterances, to the operator channel so that

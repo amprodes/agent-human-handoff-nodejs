@@ -29,34 +29,9 @@ exports.isThereResume = async (request, response) => {
             owner: userId
         },
     }).then(async (res) => {
-        // if (res.data.status === 'SUCCESS' && res.data.data.data[0].filename) {
-        //     return {
-        //         queryParams: { parameters: struct.encode({
-        //             thereIsResume: true,
-        //             filename: `${res.data.data.data[0].filename}`
-        //         }) }
-        //     }
-        // } else {
-        //     return {
-        //         queryParams: { parameters: struct.encode({
-        //             thereIsResume: false,
-        //             filename: "false"
-        //         }) }
-        //     }
-        // }
         if (res.data.status === 'SUCCESS' && res.data.data.data[0].filename !== null) {
-            //console.log(res.data.data.data)
             return {
                 session: request.body.sessionInfo.session,
-                // fulfillment_response: {
-                //     messages: [
-                //         {
-                //             text: {
-                //                 text: [`Ok found your cv, is this your latest one?... ${res.data.data.data[0].filename}`]
-                //             }
-                //         }
-                //     ]
-                // },
                 sessionInfo:
                 {
                     parameters: {
@@ -68,25 +43,18 @@ exports.isThereResume = async (request, response) => {
         } else {
             return {
                 session: request.body.sessionInfo.session,
-                // fulfillment_response: {
-                //     messages: [
-                //         {
-                //             text: {
-                //                 text: [`Oh, didn't found your cv`]
-                //             }
-                //         }
-                //     ]
-                // },
                 sessionInfo: {
                     parameters: {
                         thereIsResume: "false",
-                        resume: "",
                         filename: "false"
                     }
                 }
             }
         }
     })
+        .catch((err) => {
+            console.log(err)
+        })
     //await resumeJobs.add({ task: 'isThereResume', jsonResponse, userId });
     return response.json(jsonResponse);
 }
@@ -104,19 +72,31 @@ exports.deleteExistingResume = async (request, response) => {
             owner: userId
         },
     }).then(async (res) => {
-        return await axios.delete(`${process.env.BACKEND_URI}/client/api/v1/resume/delete/${res.data.data.data[0].id}`)
-            .then(async () => {
-                await resumeJobs.add({ task: 'delete', filePath: `${res.data.data.data[0].filename}` })
-                return {
-                    session: request.body.sessionInfo.session,
-                    sessionInfo: {
-                        parameters: {
-                            thereIsDeletedResume: "true",
-                            filename: "false"
+        if (res.data.status === 'SUCCESS' && res.data.data.data[0].filename !== null) {
+            return await axios.delete(`${process.env.BACKEND_URI}/client/api/v1/resume/delete/${res.data.data.data[0].id}`)
+                .then(async () => {
+                    await resumeJobs.add({ task: 'delete', filePath: `${res.data.data.data[0].filename}` })
+                    return {
+                        session: request.body.sessionInfo.session,
+                        sessionInfo: {
+                            parameters: {
+                                thereIsDeletedResume: "true",
+                                filename: "false"
+                            }
                         }
                     }
+                })
+        } else {
+            return {
+                session: request.body.sessionInfo.session,
+                sessionInfo: {
+                    parameters: {
+                        thereIsDeletedResume: "true",
+                        filename: "false"
+                    }
                 }
-            })
+            }
+        }
     })
     // .then(() => {
     //     resumeJobs.add({ task: 'message', userId, userSaid, userName, filePath: `${this.filename}` });
@@ -125,15 +105,10 @@ exports.deleteExistingResume = async (request, response) => {
     return response.json(jsonResponse);
 }
 exports.checkOpportunities = async (request, response) => {
-    //cleans all jobs that completed over 5 seconds ago.
-    await opportunityJobs.clean(5000);
-    //clean all jobs that failed over 10 seconds ago.
-    await opportunityJobs.clean(5000, 'failed');
 
     let parserSession = request.body.sessionInfo.session.split('/'),
         userId = parserSession[parserSession.length - 1],
-        hasOpportunity,
-        opportunityTitle
+        hasOpportunity
 
     try {
         return axios.post(`${process.env.BACKEND_URI}/client/api/v1/opportunities/list`, {
@@ -149,10 +124,12 @@ exports.checkOpportunities = async (request, response) => {
                 } else {
                     const resume = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/resume/list`, {
                         query: {
-                            id: userId
+                            owner: userId
                         },
                     })
-
+                        .catch((err) => {
+                            console.log(err)
+                        })
                     let userResume;
                     if (resume.data.status === 'SUCCESS' && resume.data.data.data.length) {
                         userResume = resume.data.data.data[0].filename;
@@ -162,9 +139,10 @@ exports.checkOpportunities = async (request, response) => {
                     await opportunityJobs.add('fillingOpportunities',
                         {
                             userId,
-                            resume: request.body.sessionInfo.parameters?.resume || request.body.sessionInfo.parameters?.filename || userResume
+                            resume: userResume
                         }, {
-                        attempts: 5,
+                        priority: 1,
+                        attempts: 1,
                         timeout: 60000
                     });
                 }
@@ -184,30 +162,29 @@ exports.checkOpportunities = async (request, response) => {
 }
 exports.isfilePresent = async (request, response) => {
     let parserSession = request.body.sessionInfo.session.split('/'),
-        userId = parserSession[parserSession.length - 1]
-    // cleans all jobs that completed over 5 seconds ago.
-    await resumeJobs.clean(5000);
-    // clean all jobs that failed over 10 seconds ago.
-    await resumeJobs.clean(5000, 'failed');
+        userId = parserSession[parserSession.length - 1];
 
     const resume = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/resume/list`, {
         query: {
-            id: userId
-        },
+            owner: userId
+        }
     })
+        .catch((err) => {
+            console.log(err)
+        })
 
     let userResume;
     if (resume.data.status === 'SUCCESS' && resume.data.data.data.length) {
         userResume = resume.data.data.data[0].filename;
     }
 
-    await resumeJobs.add({ task: 'isFilePresent', resume: request.body.sessionInfo.parameters.resume || request.body.sessionInfo.parameters.filename || userResume, userId }, { delay: 10000 });
+    await resumeJobs.add({ task: 'isFilePresent', resume: userResume, userId }, { delay: 5000, attempts: 3 });
     return response.json({
         session: request.body.sessionInfo.session
     })
 
 }
-exports.fillingTheFormPage1 = async (request, response) => {
+exports.addingReferral = async (request, response) => {
     let parserSession = request.body.sessionInfo.session.split('/'),
         userId = parserSession[parserSession.length - 1]
     // cleans all jobs that completed over 5 seconds ago.
@@ -216,50 +193,57 @@ exports.fillingTheFormPage1 = async (request, response) => {
     await resumeJobs.clean(5000, 'failed');
 
     await opportunityJobs.add(
-        'fillingTheFormPage1',
+        'addingReferral',
         {
-            firstName: request.body.sessionInfo.parameters.firstName,
-            lastName: request.body.sessionInfo.parameters.lastName,
-            email: request.body.sessionInfo.parameters.email,
-            linkedin: request.body.sessionInfo.parameters.linkedin,
-            phone: request.body.sessionInfo.parameters.phone,
-            skype: request.body.sessionInfo.parameters.skype,
-            resume: request.body.sessionInfo.parameters.resume || request.body.sessionInfo.parameters.filename,
+            referredId: request.body.sessionInfo.parameters.checking_referral_url.split('/')[4],
             userId
-        }, 
-        { 
-            timeout: 60000
+        },
+        {
+            timeout: 60000 * 30
         });
     return response.json({
         session: request.body.sessionInfo.session
     })
 }
-exports.fillingTheFormPage2 = async (request, response) => {
+exports.updateJobInfo = async (request, response) => {
+
     let parserSession = request.body.sessionInfo.session.split('/'),
         userId = parserSession[parserSession.length - 1]
-    // cleans all jobs that completed over 5 seconds ago.
-    await resumeJobs.clean(5000);
-    // clean all jobs that failed over 10 seconds ago.
-    await resumeJobs.clean(5000, 'failed');
-    console.log('request', request.body)
-    await opportunityJobs.add(
-        'fillingTheFormPage2',
-        {
-            years_of_experience: request.body.sessionInfo.parameters.years_of_experience,
-            level_of_english: request.body.sessionInfo.parameters.level_of_english,
-            filename: request.body.sessionInfo.parameters.filename,
-            salary_expectation: request.body.sessionInfo.parameters.salary_expectation,
-            ready_for_remote: request.body.sessionInfo.parameters.ready_for_remote,
-            city: request.body.sessionInfo.parameters.city,
-            skills: request.body.sessionInfo.parameters.skills,
-            country: request.body.sessionInfo.parameters.country,
-            specialization: request.body.sessionInfo.parameters.specialization,
-            userId
-        }, 
-        { 
-            timeout: 60000
-        });
-    return response.json({
-        session: request.body.sessionInfo.session
-    })
+
+    try {
+
+        if (request.body.sessionInfo.parameters.jobId === undefined){
+            return response.json({
+                session: request.body.sessionInfo.session,
+            });
+        }
+        let tag = request.body.fulfillmentInfo.tag;
+
+        return axios.get(`${process.env.BACKEND_URI}/client/api/v1/jobs/${request.body.sessionInfo.parameters.jobId}`)
+            .then(async (res) => {
+                if (res.data.status === 'SUCCESS') {
+                    // We found an opportunity
+                    const jobData = res.data.data;
+                    await opportunityJobs.add(
+                        'jobInfo',
+                        {
+                            title: jobData.title,
+                            description: jobData.description,
+                            requirements: jobData.requirements,
+                            responsabilities: jobData.responsabilities,
+                            location: jobData.location,
+                            userId,
+                            tag
+                        },
+                        {
+                            timeout: 60000
+                        });
+                }
+                return response.json({
+                    session: request.body.sessionInfo.session,
+                });
+            })
+    } catch (e) {
+        console.log(`updateJobInfo; ${e.message}... `);
+    }
 }

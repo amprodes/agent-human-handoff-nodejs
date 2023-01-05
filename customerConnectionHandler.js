@@ -53,11 +53,11 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
 
   attachHandlers() {
     this.socket.on(AppConstants.EVENT_CUSTOMER_MESSAGE, (message) => {
-      console.log('Received customer message: ', message);
+      //console.log('Received customer message: ', message);
       this._gotCustomerInput(message);
     });
     this.socket.on(AppConstants.EVENT_DISCONNECT, () => {
-      console.log('Customer disconnected');
+      //console.log('Customer disconnected');
       //this.router._sendConnectionStatusToOperator(this.socket.id, true);
       this.onDisconnect();
     });
@@ -114,9 +114,9 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
   // }
 
   _respondToCustomer (response) {
-    console.log('Sending response to customer:', response);
+    // console.log('Sending response to customer:', response);
     // console.log('Current Page:', response[0].queryResult.currentPage);
-    // console.log('Current parameters:', response[0].queryResult.parameters);
+    console.log('Current parameters:', response[0].queryResult.parameters);
     // console.log('Current message:', response[0].queryResult.responseMessages);
     console.log('ALL:', response[0]);
     this.count++;
