@@ -218,7 +218,7 @@ exports.updateJobInfo = async (request, response) => {
             });
         }
         let tag = request.body.fulfillmentInfo.tag;
-
+        
         return axios.get(`${process.env.BACKEND_URI}/client/api/v1/jobs/${request.body.sessionInfo.parameters.jobId}`)
             .then(async (res) => {
                 if (res.data.status === 'SUCCESS') {

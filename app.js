@@ -57,13 +57,18 @@ const userQueue = new Queue('userQueue', {
   redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
 });
 
-(async () => {
-  await messagesQueue.clean(60, 'wait');
-  await messagesQueue.clean(60, 'active');
-  await messagesQueue.clean(60, 'failed');
-  await messagesQueue.clean(60, 'delayed');
-  await messagesQueue.clean(60, 'completed');
-})()
+const inviteQueue = new Queue('inviteQueue', {
+  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+});
+
+const referalQueue = new Queue('referalQueue', {
+  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+});
+
+const groupsQueue = new Queue('groupsQueue', {
+  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+});
+
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
@@ -74,7 +79,10 @@ const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
     new BullAdapter(opportunityJobs),
     new BullMQAdapter(resumeJobs),
     new BullMQAdapter(dbQueue),
-    new BullMQAdapter(userQueue)
+    new BullMQAdapter(userQueue),
+    new BullMQAdapter(inviteQueue),
+    new BullMQAdapter(referalQueue),
+    new BullMQAdapter(groupsQueue),
   ],
   serverAdapter: serverAdapter,
 });

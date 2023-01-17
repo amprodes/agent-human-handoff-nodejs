@@ -65,7 +65,7 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
 
   // Called on receipt of input from the customer
   _gotCustomerInput(utterance) {
-    if(this.usr != utterance.userId){
+    if (this.usr != utterance.userId) {
       this.count = 0;
       this.usr = utterance.userId;
     }
@@ -113,23 +113,31 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
   //   return Promise.resolve();
   // }
 
-  _respondToCustomer (response) {
+  _respondToCustomer(response) {
     // console.log('Sending response to customer:', response);
     // console.log('Current Page:', response[0].queryResult.currentPage);
     console.log('Current parameters:', response[0].queryResult.parameters);
     // console.log('Current message:', response[0].queryResult.responseMessages);
     console.log('ALL:', response[0]);
     this.count++;
-    if(response[0].queryResult.currentPage.name === 'Start Page'){
+    if (response[0].queryResult.currentPage.name === 'Start Page') {
       this.count = 0;
     }
     //console.log('Current intent:', response[0].queryResult.intent);
     if (Array.isArray(response)) {
       response?.forEach(message => {
         if (Array.isArray(message.queryResult?.responseMessages) && message.queryResult?.responseMessages.length > 0) {
-          const newArray = message.queryResult.responseMessages; 
+          const newArray = message.queryResult.responseMessages;
           this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, { newArray, userId: response[1]?.userId || this.usr, response, count: this.count });
           //this.socket.emit(appConstants.FULL_RESPONSE, { response, count: this.count });
+          if (typeof (newArray) === 'object' && newArray.length > 0) {
+            const message = [... new Set(newArray)];
+            for (let m = 0; m < message.length; m++) {
+              const newArray = message[m];
+              console.log('I\ll say; ', newArray.text.text)
+            }
+          }
+
         }
         //this.socket.emit(AppConstants.EVENT_CUSTOMER_MESSAGE, message);
       });
