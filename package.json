@@ -1,0 +1,23 @@
+{
+  "name": "agent-human-handoff-sample",
+  "version": "0.0.1",
+  "description": "Code sample for agent-human handoff with Dialogflow",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Google Inc.",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@bull-board/api": "^4.6.0",
+    "@bull-board/express": "^4.6.0",
+    "@google-cloud/dialogflow-cx": "^3.1.1",
+    "axios": "^1.1.2",
+    "bull": "^4.10.1",
+    "dotenv": "^16.0.3",
+    "express": "^4.15.3",
+    "helmet": "^6.0.0",
+    "pb-util": "^1.0.3",
+    "socket.io": "^4.5.2"
+  }
+}
