@@ -25,7 +25,7 @@ exports.webhook = async (request, response) => {
     let parserSession = request.body.sessionInfo.session.split('/'),
         userId = parserSession[parserSession.length - 1],
         result;
-
+        console.log({tag, userId})
     switch (tag) {
         case 'itr':
             let jsonResponse = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/resume/list`, {
@@ -97,55 +97,51 @@ exports.webhook = async (request, response) => {
             result = response.json(derJsonResponse);
             break;
         case 'cho':
-            try {
-                result = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/opportunities/list`, {
-                    query: {
-                        user: userId
-                    },
-                })
-                    .then(async (res) => {
-                        if (res.data.status === 'SUCCESS') {
-                            // We found an opportunity
-                            hasOpportunity = true
-                            opportunityTitle = res.data.data.data[0].title;
-                        } else {
-                            const resume = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/resume/list`, {
-                                query: {
-                                    owner: userId
-                                },
+            result = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/opportunities/list`, {
+                query: {
+                    user: userId
+                },
+            })
+                .then(async (res) => {
+                    if (res.data.status === 'SUCCESS') {
+                        // We found an opportunity
+                        hasOpportunity = true
+                        opportunityTitle = res.data.data.data[0].title;
+                    } else {
+                        const resume = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/resume/list`, {
+                            query: {
+                                owner: userId
+                            },
+                        })
+                            .catch((err) => {
+                                console.log(err)
                             })
-                                .catch((err) => {
-                                    console.log(err)
-                                })
-                            let userResume;
-                            if (resume.data.status === 'SUCCESS' && resume.data.data.data.length) {
-                                userResume = resume.data.data.data[0].filename;
-                            }
-                            // We didn't found a opportunity, let's search for an opportunity
-                            hasOpportunity = false
-                            await opportunityJobs.add('fillingOpportunities',
-                                {
-                                    userId,
-                                    resume: userResume
-                                }, {
-                                priority: 1,
-                                attempts: 1,
-                                timeout: 60000
-                            });
+                        let userResume;
+                        if (resume.data.status === 'SUCCESS' && resume.data.data.data.length) {
+                            userResume = resume.data.data.data[0].filename;
                         }
-
-                        return response.json({
-                            session: request.body.sessionInfo.session,
-                            sessionInfo: {
-                                parameters: {
-                                    hasOpportunity
-                                }
-                            }
+                        // We didn't found a opportunity, let's search for an opportunity
+                        hasOpportunity = false
+                        await opportunityJobs.add('fillingOpportunities',
+                            {
+                                userId,
+                                resume: userResume
+                            }, {
+                            priority: 1,
+                            attempts: 1,
+                            timeout: 60000
                         });
-                    })
-            } catch (e) {
-                console.log(`checkOpportunities; ${e.message}... `);
-            }
+                    }
+
+                    return response.json({
+                        session: request.body.sessionInfo.session,
+                        sessionInfo: {
+                            parameters: {
+                                hasOpportunity
+                            }
+                        }
+                    });
+                })
             break;
         case 'ifp':
             const resume = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/resume/list`, {

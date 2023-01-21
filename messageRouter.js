@@ -149,7 +149,7 @@ class MessageRouter {
 
   // Sends an utterance to Dialogflow and returns a promise with API response.
   async _sendUtteranceToAgent(utterance) {
-    console.log('Sending utterance to agent', utterance);
+    // console.log('Sending utterance to agent', utterance);
     try {
       const sessionPath = this.client.projectLocationAgentSessionPath(
         this.projectId,
