@@ -25,57 +25,38 @@ require('dotenv').config()
 // Load our custom classes
 const CustomerStore = require('./customerStore.js');
 const MessageRouter = require('./messageRouter.js');
-const webhook = require('./webhooks.js');
+const webhooks = require('./webhooks.js');
 
 const bodyParser = require("body-parser");
 const helmet = require("helmet");
 
 const { ExpressAdapter } = require('@bull-board/express');
 
-const messagesQueue = new Queue('messagesQueue', {
+const redisOptions = {
   redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-  settings: { maxStalledCount: 5, lockDuration: 300000 }
-});
+};
 
-const cola = new Queue('cola', {
-  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-}); // if you have a special connection to redis. 
+const messagesQueue = new Queue('messagesQueue', redisOptions);
+const read = new Queue('read', redisOptions); // if you have a special connection to redis. 
+const write = new Queue('write', redisOptions); // if you have a special connection to redis.
 
-const resumeJobs = new Queue('resumeJobs', {
-  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-});
-
-const opportunityJobs = new Queue('opportunityJobs', {
-  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-});
-
-const dbQueue = new Queue('dbQueue', {
-  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-});
-
-const userQueue = new Queue('userQueue', {
-  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-});
-
-const inviteQueue = new Queue('inviteQueue', {
-  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-});
-
-const referalQueue = new Queue('referalQueue', {
-  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-});
-
-const groupsQueue = new Queue('groupsQueue', {
-  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-});
+const resumeJobs = new Queue('resumeJobs', redisOptions);
+const opportunityJobs = new Queue('opportunityJobs', redisOptions);
+const dbQueue = new Queue('dbQueue', redisOptions);
+const userQueue = new Queue('userQueue', redisOptions);
+const inviteQueue = new Queue('inviteQueue', redisOptions);
+const referalQueue = new Queue('referalQueue', redisOptions);
+const groupsQueue = new Queue('groupsQueue', redisOptions);
+const refulfillQueue = new Queue('refulfillQueue', redisOptions);
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
   queues: [
-    new BullMQAdapter(messagesQueue),
-    new BullAdapter(cola),
+    new BullMQAdapter(read),
+    new BullMQAdapter(write),
+    new BullMQAdapter(messagesQueue), 
     new BullAdapter(opportunityJobs),
     new BullMQAdapter(resumeJobs),
     new BullMQAdapter(dbQueue),
@@ -83,6 +64,7 @@ const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
     new BullMQAdapter(inviteQueue),
     new BullMQAdapter(referalQueue),
     new BullMQAdapter(groupsQueue),
+    new BullMQAdapter(refulfillQueue)
   ],
   serverAdapter: serverAdapter,
 });
@@ -141,14 +123,17 @@ app.get('/operator', (req, res) => {
 });
 
 // Webhooks
-app.post('/isThereResume', webhook.isThereResume)
-app.post('/deleteExistingResume', webhook.deleteExistingResume)
-app.post('/checkOpportunities', webhook.checkOpportunities)
-app.post('/isfilePresent', webhook.isfilePresent)
-app.post('/addingReferral', webhook.addingReferral)
-app.post('/updateJobInfo', webhook.updateJobInfo)
+// app.post('/isThereResume', webhook.isThereResume)
+// app.post('/deleteExistingResume', webhook.deleteExistingResume)
+// app.post('/checkOpportunities', webhook.checkOpportunities)
+// app.post('/isfilePresent', webhook.isfilePresent)
+// app.post('/addingReferral', webhook.addingReferral)
+// app.post('/updateJobInfo', webhook.updateJobInfo)
+app.post('/webhook', webhooks.webhook)
 // Begin responding to websocket and http requests
 messageRouter.handleConnections();
 http.listen(5000, () => {
   console.log('Listening on *:5000');
 });
+
+
