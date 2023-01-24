@@ -1,5 +1,6 @@
 const axios = require('axios');
 const Queue = require('bull');
+const Redis = require('ioredis');
 let client,
     subscriber;
 const opts = {
