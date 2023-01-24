@@ -12,16 +12,63 @@ require('dotenv').config()
 // Load our custom classes
 const CustomerStore = require('./customerStore.js');
 const MessageRouter = require('./messageRouter.js');
+const { ExpressAdapter } = require('@bull-board/express');
 const webhooks = require('./webhooks.js');
-
 const bodyParser = require("body-parser");
 const helmet = require("helmet");
-
-const { ExpressAdapter } = require('@bull-board/express');
+const Redis = require('ioredis');
+require('events').EventEmitter.defaultMaxListeners = 0;
+let client;
+let subscriber;
 
 const redisOptions = {
-  redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
-};
+  // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
+  createClient: function (type, redisOpts) {
+    switch (type) {
+      case 'client':
+        if (!client) {
+          client = new Redis(`redis://${process.env.REDIS_URI}:${process.env.REDIS_PORT}`, {
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false
+        });
+        }
+        return client;
+      case 'subscriber':
+        if (!subscriber) {
+          subscriber = new Redis(`redis://${process.env.REDIS_URI}:${process.env.REDIS_PORT}`, {
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false
+        });
+        }
+        return subscriber;
+      case 'bclient':
+        return new Redis(`redis://${process.env.REDIS_URI}:${process.env.REDIS_PORT}`, {
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false
+      });
+      default:
+        throw new Error('Unexpected connection type: ', type);
+    }
+  },
+  settings: {
+    backoffStrategies: {
+      jitter: function (attemptsMade, err) {
+        return 5000 + Math.random() * 500;
+      }
+    }
+  }
+}
+
+// const options = {
+//   redis: { port: process.env.REDIS_PORT, host: process.env.REDIS_URI/*, password: 'foobared'*/ },
+//   settings: {
+//     backoffStrategies: {
+//       jitter: function (attemptsMade, err) {
+//         return 5000 + Math.random() * 500;
+//       }
+//     }
+//   }
+// };
 
 const messagesQueue = new Queue('messagesQueue', redisOptions);
 const read = new Queue('read', redisOptions); // if you have a special connection to redis. 

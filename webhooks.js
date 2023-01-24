@@ -1,7 +1,46 @@
 const axios = require('axios');
 const Queue = require('bull');
-const resumeJobs = new Queue('resumeJobs', `redis://${process.env.REDIS_URI}:6379`);
-const opportunityJobs = new Queue('opportunityJobs', `redis://${process.env.REDIS_URI}:6379`);
+let client,
+    subscriber;
+const opts = {
+    // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
+    createClient: function (type) {
+        switch (type) {
+            case 'client':
+                if (!client) {
+                    client = new Redis(process.env.REDIS_URI, {
+                        maxRetriesPerRequest: null,
+                        enableReadyCheck: false
+                    });
+                }
+                return client;
+            case 'subscriber':
+                if (!subscriber) {
+                    subscriber = new Redis(process.env.REDIS_URI, {
+                        maxRetriesPerRequest: null,
+                        enableReadyCheck: false
+                    });
+                }
+                return subscriber;
+            case 'bclient':
+                return new Redis(process.env.REDIS_URI, {
+                    maxRetriesPerRequest: null,
+                    enableReadyCheck: false
+                });
+            default:
+                throw new Error('Unexpected connection type: ', type);
+        }
+    },
+    settings: {
+        backoffStrategies: {
+            jitter: function (attemptsMade, err) {
+                return 5000 + Math.random() * 500;
+            }
+        }
+    }
+}
+const resumeJobs = new Queue('resumeJobs', opts);
+const opportunityJobs = new Queue('opportunityJobs', opts);
 
 resumeJobs.on('cleaned', function (jobs, type) {
     console.log('Cleaned %s %s jobs', jobs.length, type);
@@ -25,7 +64,7 @@ exports.webhook = async (request, response) => {
     let parserSession = request.body.sessionInfo.session.split('/'),
         userId = parserSession[parserSession.length - 1],
         result;
-        console.log({tag, userId})
+    console.log({ tag, userId })
     switch (tag) {
         case 'itr':
             let jsonResponse = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/resume/list`, {
@@ -128,7 +167,7 @@ exports.webhook = async (request, response) => {
                                 resume: userResume
                             }, {
                             priority: 1,
-                            attempts: 1,
+                            attempts: 3,
                             timeout: 60000
                         });
                     }

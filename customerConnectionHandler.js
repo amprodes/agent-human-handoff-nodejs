@@ -118,7 +118,7 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
     // console.log('Current Page:', response[0].queryResult.currentPage);
     // console.log('Current parameters:', response[0].queryResult.parameters);
     // console.log('Current message:', response[0].queryResult.responseMessages);
-    // console.log('ALL:', response[0]);
+    console.log('ALL:', response[0].queryResult);
     this.count++;
     if (response[0].queryResult.currentPage.name === 'Start Page') {
       this.count = 0;
