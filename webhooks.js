@@ -51,21 +51,26 @@ opportunityJobs.on('cleaned', function (jobs, type) {
     console.log('Cleaned %s %s jobs', jobs.length, type);
 });
 
-axios.post(`${process.env.BACKEND_URI}/client/auth/login`, {
-    username: process.env.BACKEND_USER,
-    password: process.env.BACKEND_PASSWORD
-})
-    .then(async (response) => {
-        console.log('logged in by token; ', response.data.data.token)
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.data.token}`;
-    })
-
 exports.webhook = async (request, response) => {
     const tag = request.body.fulfillmentInfo.tag;
     let parserSession = request.body.sessionInfo.session.split('/'),
         userId = parserSession[parserSession.length - 1],
         result;
     console.log({ tag, userId })
+    
+    // Login to the database
+    await axios.post(`${process.env.BACKEND_URI}/client/auth/login`, {
+        username: process.env.BACKEND_USER,
+        password: process.env.BACKEND_PASSWORD
+    })
+        .then(async (response) => {
+            console.log('logged in by token; ', response.data.data.token)
+            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.data.token}`;
+        })
+        .catch((error) => {
+            console.log('error logging in by token; ', error)
+        });
+
     switch (tag) {
         case 'itr':
             let jsonResponse = await axios.post(`${process.env.BACKEND_URI}/client/api/v1/resume/list`, {
