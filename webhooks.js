@@ -85,7 +85,7 @@ exports.webhook = async (request, response) => {
                         {
                             parameters: {
                                 thereIsResume: "true",
-                                filename: `${res.data.data.data[0].filename}`
+                                filename: `${res.data.data.data[0].filename}`,
                             }
                         }
                     }
@@ -165,15 +165,18 @@ exports.webhook = async (request, response) => {
                         if (resume.data.status === 'SUCCESS' && resume.data.data.data.length) {
                             userResume = resume.data.data.data[0].filename;
                         }
+                        // Fetching user info
+                        const user = await axios.get(`${process.env.BACKEND_URI}/client/api/v1/user/${userId}`).then(res => res.data.data).catch(() => null)
                         // We didn't found a opportunity, let's search for an opportunity
                         hasOpportunity = false
                         await opportunityJobs.add('fillingOpportunities',
                             {
                                 userId,
-                                resume: userResume
+                                resume: userResume,
+                                provider: user != null && user.applied_provider.length > 0 ? user.applied_provider : [],
+                                category: user.category
                             }, {
                             priority: 1,
-                            attempts: 3,
                             timeout: 60000
                         });
                     }
@@ -244,7 +247,10 @@ exports.webhook = async (request, response) => {
                                 description: jobData.description,
                                 requirements: jobData.requirements,
                                 responsabilities: jobData.responsabilities,
+                                skills: jobData.skills,
                                 location: jobData.location,
+                                provider: jobData.provider,
+                                category: jobData.category,
                                 userId,
                                 tag
                             },
