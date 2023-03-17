@@ -114,7 +114,7 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
   // }
 
   _respondToCustomer(response) {
-    // console.log('Sending response to customer:', response);
+    // console.log('Sending response to customer:', response);  
     // console.log('Current Page:', response[0].queryResult.currentPage);
     // console.log('Current parameters:', response[0].queryResult.parameters);
     // console.log('Current message:', response[0].queryResult.responseMessages);

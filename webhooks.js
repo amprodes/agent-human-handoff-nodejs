@@ -177,7 +177,7 @@ exports.webhook = async (request, response) => {
                                 category: user.category
                             }, {
                             priority: 1,
-                            timeout: 60000
+                            timeout: 300000
                         });
                     }
 
