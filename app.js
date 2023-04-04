@@ -82,6 +82,8 @@ const inviteQueue = new Queue('inviteQueue', redisOptions);
 const referalQueue = new Queue('referalQueue', redisOptions);
 const groupsQueue = new Queue('groupsQueue', redisOptions);
 const refulfillQueue = new Queue('refulfillQueue', redisOptions);
+const jobDataMiner = new Queue('jobDataMiner', redisOptions);
+const directSearchQueue = new Queue('directSearchQueue', redisOptions);
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
@@ -98,7 +100,9 @@ const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
     new BullMQAdapter(inviteQueue),
     new BullMQAdapter(referalQueue),
     new BullMQAdapter(groupsQueue),
-    new BullMQAdapter(refulfillQueue)
+    new BullMQAdapter(refulfillQueue),
+    new BullMQAdapter(jobDataMiner),
+    new BullMQAdapter(directSearchQueue)
   ],
   serverAdapter: serverAdapter,
 });
@@ -153,6 +157,11 @@ app.get('/customer', (req, res) => {
 });
 
 app.get('/operator', (req, res) => {
+  res.sendFile(`${__dirname}/static/operator.html`);
+});
+
+app.get('/refreshToken', (req, res) => {
+  console.log(res)
   res.sendFile(`${__dirname}/static/operator.html`);
 });
 

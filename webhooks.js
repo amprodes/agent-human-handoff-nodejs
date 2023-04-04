@@ -176,8 +176,8 @@ exports.webhook = async (request, response) => {
                                 provider: user != null && user.applied_provider.length > 0 ? user.applied_provider : [],
                                 category: user.category
                             }, {
-                            priority: 1,
-                            timeout: 300000
+                            timeout: 60*60,
+                            attempts: 3
                         });
                     }
 
@@ -234,8 +234,8 @@ exports.webhook = async (request, response) => {
                     session: request.body.sessionInfo.session,
                 });
             }
-
-            result = await axios.get(`${process.env.BACKEND_URI}/client/api/v1/jobs/${request.body.sessionInfo.parameters.jobId}`)
+            const jobId = Array.isArray(request.body.sessionInfo.parameters.jobId) ? request.body.sessionInfo.parameters.jobId : [request.body.sessionInfo.parameters.jobId];
+            result = await axios.get(`${process.env.BACKEND_URI}/client/api/v1/jobs/${jobId[0].split(',')[0]}`)
                 .then(async (res) => {
                     if (res.data.status === 'SUCCESS') {
                         // We found an opportunity

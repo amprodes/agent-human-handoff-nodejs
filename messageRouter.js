@@ -87,6 +87,8 @@ class MessageRouter {
     // }
     if (utterance.event) {
       return this._sendEventToAgent(utterance.userId, utterance.event, utterance.queryParams);
+    } else if(utterance.queryParams === undefined){
+      return this._sendOnlyEventToAgent(utterance.userId, utterance.event);
     }
     return this._sendUtteranceToAgent(utterance);
 
@@ -120,6 +122,31 @@ class MessageRouter {
     // });
   }
 
+  // Uses the Dialogflow client to send a 'WELCOME' event to the agent, starting the conversation.
+  async _sendOnlyEventToAgent(userId, event) {
+    console.log(`Sending event ${event} to agent`);
+    const sessionPath = this.client.projectLocationAgentSessionPath(
+      this.projectId,
+      this.location,
+      this.agentId,
+      userId
+    )
+    const request = {
+      session: sessionPath,
+      queryInput: {
+        event: {
+          event
+        },
+        languageCode: 'en'
+      }
+    }
+    try {
+      const [response] = await this.client.detectIntent(request);
+      return [response];
+    } catch (e) {
+      console.log(`${e.message}`)
+    }
+  }
   // Uses the Dialogflow client to send a 'WELCOME' event to the agent, starting the conversation.
   async _sendEventToAgent(userId, event, queryParams) {
     console.log(`Sending event ${event} to agent`);
