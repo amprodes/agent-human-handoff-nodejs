@@ -85,9 +85,10 @@ class MessageRouter {
     //   }, this.timeout)
     //   this.isTimeOutFired = true
     // }
+    console.log({ utterance });
     if (utterance.event) {
       return this._sendEventToAgent(utterance.userId, utterance.event, utterance.queryParams);
-    } else if(utterance.queryParams === undefined){
+    } else if(utterance.queryParams === undefined && utterance.event){
       return this._sendOnlyEventToAgent(utterance.userId, utterance.event);
     }
     return this._sendUtteranceToAgent(utterance);
@@ -177,6 +178,12 @@ class MessageRouter {
   // Sends an utterance to Dialogflow and returns a promise with API response.
   async _sendUtteranceToAgent(utterance) {
     // console.log('Sending utterance to agent', utterance);
+    console.log({
+      projectId: this.projectId,
+      location: this.location,
+      agentId: this.agentId,
+      userId: utterance.userId
+    })
     try {
       const sessionPath = this.client.projectLocationAgentSessionPath(
         this.projectId,
@@ -185,7 +192,7 @@ class MessageRouter {
         utterance.userId
       )
       let request;
-      
+
       if (utterance.message) {
         request = {
           session: sessionPath,

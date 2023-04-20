@@ -52,15 +52,19 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
   }
 
   attachHandlers() {
-    this.socket.on(AppConstants.EVENT_CUSTOMER_MESSAGE, (message) => {
-      //console.log('Received customer message: ', message);
-      this._gotCustomerInput(message);
+    this.socket.on(AppConstants.EVENT_CUSTOMER_MESSAGE, (data) => {
+      this.socket.emit('message customer gpt', data);
+      //   //console.log('Received customer message: ', message);
+      //   this._gotCustomerInput(data);
+      // });
+      // this.socket.on(AppConstants.EVENT_DISCONNECT, () => {
+      //   //console.log('Customer disconnected');
+      //   //this.router._sendConnectionStatusToOperator(this.socket.id, true);
+      //   this.onDisconnect();
     });
-    this.socket.on(AppConstants.EVENT_DISCONNECT, () => {
-      //console.log('Customer disconnected');
-      //this.router._sendConnectionStatusToOperator(this.socket.id, true);
-      this.onDisconnect();
-    });
+    this.socket.on('message to customer gpt', (data) => {
+      this.socket.emit('message to customer', data);
+    })
   }
 
   // Called on receipt of input from the customer
@@ -72,7 +76,7 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
 
     // Look up this customer
     this.router.customerStore
-      .getOrCreateCustomer(this.socket.id)
+      .getOrCreateCustomer(utterance.userId)
       .then(customer => {
         // Tell the router to perform any next steps
         return this.router._routeCustomer(utterance);
@@ -128,7 +132,7 @@ class CustomerConnectionHandler extends ChatConnectionHandler {
       response?.forEach(message => {
         if (Array.isArray(message.queryResult?.responseMessages) && message.queryResult?.responseMessages.length > 0) {
           const newArray = message.queryResult.responseMessages;
-          this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, { newArray, userId: response[1]?.userId || this.usr, response, count: this.count });
+          //this.socket.emit(AppConstants.EVENT_TO_CUSTOMER_MESSAGE, { newArray, userId: response[1]?.userId || this.usr, response, count: this.count });
           //this.socket.emit(appConstants.FULL_RESPONSE, { response, count: this.count });
           if (typeof (newArray) === 'object' && newArray.length > 0) {
             const message = [... new Set(newArray)];

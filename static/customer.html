@@ -30,6 +30,8 @@ limitations under the License.
       #messages li.customer-message::before { content: "> " }
       #messages li:nth-child(odd) { background: #eee; }
     </style>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; script-src 'self' https://ajax.googleapis.com 'unsafe-inline' 'unsafe-eval';  media-src *">
+
   </head>
   <body>
     <h1>Customer</h1>
@@ -39,32 +41,7 @@ limitations under the License.
     </form>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script>
-      $(function () {
-        var socket = io('/customer');
-
-        // When the form is submitted, send a customer message to the server
-        $('form').submit(function(){
-          var messageText = $('#m').val();
-          $('#messages').append($('<li class="customer-message">').text(messageText));
-          socket.emit('customer message', messageText);
-          $('#m').val('');
-          return false;
-        });
-
-        // When we receive a customer message, display it
-        socket.on('message to customer', function(msg){
-          $('#messages').append($('<li>').text(msg));
-        });
-
-        // When we receive a system error, display it
-        socket.on('system error', function(error) {
-          var errorText = error.type + ' - ' + error.message;
-          console.log(errorText);
-          $('#messages').append($('<li class="customer-error">').text(errorText));
-        });
-      });
-    </script>
+    <script src="/js/customer.js"></script>
   </body>
 </html>
 

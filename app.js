@@ -83,6 +83,7 @@ const referalQueue = new Queue('referalQueue', redisOptions);
 const groupsQueue = new Queue('groupsQueue', redisOptions);
 const refulfillQueue = new Queue('refulfillQueue', redisOptions);
 const jobDataMiner = new Queue('jobDataMiner', redisOptions);
+const matchQueue = new Queue('matchQueue', redisOptions);
 const directSearchQueue = new Queue('directSearchQueue', redisOptions);
 
 const serverAdapter = new ExpressAdapter();
@@ -102,7 +103,8 @@ const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
     new BullMQAdapter(groupsQueue),
     new BullMQAdapter(refulfillQueue),
     new BullMQAdapter(jobDataMiner),
-    new BullMQAdapter(directSearchQueue)
+    new BullMQAdapter(directSearchQueue),
+    new BullMQAdapter(matchQueue)
   ],
   serverAdapter: serverAdapter,
 });
@@ -120,6 +122,7 @@ if (!keyPath) {
 
 // Load and instantiate the Dialogflow client library
 const { SessionsClient } = require('@google-cloud/dialogflow-cx');
+const Bull = require('bull');
 const dialogflowClient = new SessionsClient({
   keyFilename: keyPath,
   apiEndpoint: process.env.DF_API_ENDPOINT
@@ -149,7 +152,9 @@ const messageRouter = new MessageRouter({
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(helmet());
+app.use(helmet({   contentSecurityPolicy: {  useDefaults: true, directives: { 'script-src': ["'self'", "https://ajax.googleapis.com"]  }  }  }));
+// Serve static files from the "public" directory
+app.use(express.static('public'));
 
 // Serve static html files for the customer and operator clients
 app.get('/customer', (req, res) => {
@@ -165,14 +170,9 @@ app.get('/refreshToken', (req, res) => {
   res.sendFile(`${__dirname}/static/operator.html`);
 });
 
-// Webhooks
-// app.post('/isThereResume', webhook.isThereResume)
-// app.post('/deleteExistingResume', webhook.deleteExistingResume)
-// app.post('/checkOpportunities', webhook.checkOpportunities)
-// app.post('/isfilePresent', webhook.isfilePresent)
-// app.post('/addingReferral', webhook.addingReferral)
-// app.post('/updateJobInfo', webhook.updateJobInfo)
+// Webhook
 app.post('/webhook', webhooks.webhook);
+app.post('/webhookOpenai', webhooks.webhookOpenai);
 // Begin responding to websocket and http requests
 messageRouter.handleConnections();
 http.listen(5000, () => {
