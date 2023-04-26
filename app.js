@@ -85,6 +85,8 @@ const refulfillQueue = new Queue('refulfillQueue', redisOptions);
 const jobDataMiner = new Queue('jobDataMiner', redisOptions);
 const matchQueue = new Queue('matchQueue', redisOptions);
 const directSearchQueue = new Queue('directSearchQueue', redisOptions);
+const writePost = new Queue('writePost', redisOptions);
+const getJobs = new Queue('getJobs',redisOptions);
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
@@ -104,7 +106,9 @@ const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
     new BullMQAdapter(refulfillQueue),
     new BullMQAdapter(jobDataMiner),
     new BullMQAdapter(directSearchQueue),
-    new BullMQAdapter(matchQueue)
+    new BullMQAdapter(matchQueue),
+    new BullAdapter(writePost),
+    new BullAdapter(getJobs)
   ],
   serverAdapter: serverAdapter,
 });
