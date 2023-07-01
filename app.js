@@ -70,45 +70,32 @@ const redisOptions = {
 //   }
 // };
 
-const messagesQueue = new Queue('messagesQueue', redisOptions);
-const read = new Queue('read', redisOptions); // if you have a special connection to redis. 
-const write = new Queue('write', redisOptions); // if you have a special connection to redis.
-
-const resumeJobs = new Queue('resumeJobs', redisOptions);
-const opportunityJobs = new Queue('opportunityJobs', redisOptions);
-const dbQueue = new Queue('dbQueue', redisOptions);
-const userQueue = new Queue('userQueue', redisOptions);
 const inviteQueue = new Queue('inviteQueue', redisOptions);
-const referalQueue = new Queue('referalQueue', redisOptions);
-const groupsQueue = new Queue('groupsQueue', redisOptions);
-const refulfillQueue = new Queue('refulfillQueue', redisOptions);
+const referal = new Queue('referal', redisOptions);
+const groupsQueue = new Queue('groupsQueue', redisOptions); 
 const jobDataMiner = new Queue('jobDataMiner', redisOptions);
 const matchQueue = new Queue('matchQueue', redisOptions);
 const directSearchQueue = new Queue('directSearchQueue', redisOptions);
 const writePost = new Queue('writePost', redisOptions);
 const getJobs = new Queue('getJobs',redisOptions);
+const email = new Queue('email',redisOptions);
+const messages = new Queue('messages', redisOptions);
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
   queues: [
-    new BullMQAdapter(read),
-    new BullMQAdapter(write),
-    new BullMQAdapter(messagesQueue), 
-    new BullAdapter(opportunityJobs),
-    new BullMQAdapter(resumeJobs),
-    new BullMQAdapter(dbQueue),
-    new BullMQAdapter(userQueue),
     new BullMQAdapter(inviteQueue),
-    new BullMQAdapter(referalQueue),
+    new BullMQAdapter(referal),
     new BullMQAdapter(groupsQueue),
-    new BullMQAdapter(refulfillQueue),
     new BullMQAdapter(jobDataMiner),
     new BullMQAdapter(directSearchQueue),
     new BullMQAdapter(matchQueue),
     new BullAdapter(writePost),
-    new BullAdapter(getJobs)
+    new BullAdapter(getJobs),
+    new BullAdapter(email),
+    new BullAdapter(messages)
   ],
   serverAdapter: serverAdapter,
 });
